@@ -7,8 +7,8 @@ Automated Test Case Testing for CS1020
 ```
 $ git clone git@github.com:nnamon/tentwentytester.git
 $ cd tentwentytester
-$ chmod +x tentwentytester
-$ sudo ln -s tentwentytester /bin/tentwentytester
+$ chmod +x tentwentytester.py
+$ sudo ln -s tentwentytester.py /bin/tentwentytester
 ```
 
 # Usage
