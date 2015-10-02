@@ -4,6 +4,7 @@ import os
 import subprocess
 import argparse
 import difflib
+import sys
 
 
 divider = "-" * 30
@@ -37,30 +38,38 @@ def get_data(inp_dir, oup_dir):
     return merged
 
 
-def run_instance(class_file, data_in, data_out):
+def run_instance(class_file, data_in, data_out, verbose):
     result = False
     cwd = os.getcwd()
     class_path = os.path.realpath(class_file)
     class_name = os.path.basename(class_path).split(".")[0]
     class_dir = os.path.dirname(class_path)
     os.chdir(class_dir)
+    pverbose(verbose, "DEBUG: process %s start" % str((class_file,
+                                                      data_in,
+                                                      data_out)))
     proc = subprocess.Popen(["java", class_name], stdout=subprocess.PIPE,
                             stdin=subprocess.PIPE)
+    pverbose(verbose, "DEBUG: process end")
     proc.stdin.write(data_in)
     proc.stdin.flush()
+    proc.stdin.close()
+    pverbose(verbose, "DEBUG: reading from process")
     proc_output = proc.stdout.read()
+    pverbose(verbose, "DEBUG: end reading from process")
     if data_out == proc_output:
         result = True
     os.chdir(cwd)
     return (result, proc_output)
 
 
-def enumerate_tests(class_file, input_path, output_path):
+def enumerate_tests(class_file, input_path, output_path, verbose):
     data_set = get_data(input_path, output_path)
     result_set = {}
     for i in data_set.keys():
+        pverbose(verbose, "DEBUG: Running %s" % str(i))
         data = data_set[i]
-        result = run_instance(class_file, data[0], data[1])
+        result = run_instance(class_file, data[0], data[1], verbose)
         result_set[i] = (result[0], result[1], data[1])
     return result_set
 
@@ -90,6 +99,12 @@ def display_diff(results):
                                                "Test Case"))
 
 
+def pverbose(status, data):
+    if status:
+        sys.stderr.write(data + "\n")
+        sys.stderr.flush()
+
+
 def main():
     parser = argparse.ArgumentParser("Runs a java class for all test cases")
     parser.add_argument("classf", help="java class to run")
@@ -97,8 +112,11 @@ def main():
     parser.add_argument("outputd", help="output cases directory")
     parser.add_argument("--diff", action="store_true",
                         help="run diff on invalid cases")
+    parser.add_argument("--verbose", help="output debugging",
+                        action="store_true")
     args = parser.parse_args()
-    results = enumerate_tests(args.classf, args.inputd, args.outputd)
+    results = enumerate_tests(args.classf, args.inputd, args.outputd,
+                              args.verbose)
     display_results(results)
     if args.diff:
         display_diff(results)
